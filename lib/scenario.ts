@@ -33,16 +33,4 @@ export const meetings = [
  ],summary:['变更：Choi 提出将 B 组 610 修订为 690 Ω·μm。','影响：降幅从 25.6% 变为 15.9%，未达到 20% 目标。','决策：Park 提出两组良率均至少 75%，自本次会议起适用。','待办：修订月报；下一轮清洗对照待 Lee 确认。']},
 ];
 export const timestamps=['02:10','07:24','12:06','18:42','24:15','29:30'];
-export type ReviewState={extraction:boolean;data:boolean;decision:boolean};
-export const initialReview:ReviewState={extraction:false,data:false,decision:false};
-export function confirmReview(state:ReviewState,kind:keyof ReviewState,actor:string):ReviewState{
- if(kind==='data'&&actor!=='Choi') throw new Error('请切换到 Choi 的演示视角确认数据。');
- if(kind==='decision'&&actor!=='Park') throw new Error('请切换到 Park 的演示视角确认决策。');
- if(kind==='data'&&!state.extraction) throw new Error('请先核查会议中的原始数字提取。');
- return {...state,[kind]:true};
-}
-export function makeReport(state:ReviewState){
- const data=state.data?'经 Choi 确认的会议记录：A 组中位接触电阻为 820 Ω·μm（n=6），B 组为 690 Ω·μm（n=5），相对降幅 15.9%，尚未达到月初设定的 20% 目标。':'B 组数据存在 610 与 690 Ω·μm 的版本冲突，等待 Choi 确认；本稿暂不引用该数值，也不判断电阻目标是否达成。';
- const decision=state.decision?'Park 已确认 9 月 23 日确定的门槛：两组初筛通过率均至少 75%。据 Lee 的会议陈述，A 组为 10/12（83.3%），B 组为 8/12（66.7%），B 组未达门槛。':'据 Lee 的会议陈述，A 组初筛通过 10/12，B 组 8/12。75% 门槛尚待 Park 确认，暂不作为有效决策判断是否进入下一阶段。';
- return `${data}\n\n${decision}\n\n接触处理改变界面状态仍为假设。材料 M09；完整测试条件、原始文件与误差分析尚未接入，不能由中位数差异推出显著性或因果关系。下一步：Han 修订月报，Choi 补齐测试依据，Lee 确认清洗对照安排。`;
-}
+
