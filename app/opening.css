@@ -9,7 +9,10 @@
 .opening h1{font-family:Fraunces,Georgia,serif;font-size:clamp(28px,5.8vw,92px);font-weight:900;line-height:1.15;letter-spacing:-.055em;margin:0}
 .opening-cta{display:inline-flex;align-items:center;justify-content:center;min-width:148px;background:transparent;color:#111;border:2px solid #111;border-radius:100px;padding:10px 36px;text-decoration:none;font-size:13px;letter-spacing:1.5px;font-weight:300;transition:background .2s,color .2s}.opening-cta:hover{background:#111;color:#5285ee}
 .opening a:focus-visible{outline:3px solid #111;outline-offset:6px}
-.opening-cursor{position:absolute;top:0;left:0;pointer-events:none;z-index:20;transform:translate(var(--cursor-x,calc(50vw - 36px)),var(--cursor-y,calc(100svh - 104px)))}.opening-cursor svg{display:block;width:72px;height:72px;fill:#5285ee;color:#111}
+.opening-cursor{position:absolute;top:0;left:0;pointer-events:none;z-index:20;transform:translate(var(--cursor-x,calc(50vw - 36px)),var(--cursor-y,calc(100svh - 104px)))}.opening-cursor svg{display:block;width:72px;height:72px;fill:#fff;color:#111}
 .opening[lang="zh-CN"] h1{font-family:"Songti SC",SimSun,serif;font-size:clamp(28px,5.4vw,84px);letter-spacing:-.055em}
 @media(max-width:600px){.opening{padding:0 20px}.opening-header{padding:24px 0;min-height:85px;gap:12px}.opening-header nav{gap:16px}.opening-main{padding:60px 0 145px;gap:28px}.opening h1{font-size:clamp(26px,6.2vw,38px)}}
 @media(prefers-reduced-motion:reduce){.opening-cta{transition:none}}
+.opening-letter-slot{display:inline-block}.opening-letter{display:inline-block;transform-origin:50% 70%;transition:transform 100ms ease-out;will-change:transform}
+@media(hover:hover) and (pointer:fine){.opening[data-cursor-active="true"],.opening[data-cursor-active="true"] *{cursor:none!important}}
+@media(prefers-reduced-motion:reduce){.opening-letter{transition:none;transform:none!important}}
