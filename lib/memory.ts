@@ -40,14 +40,16 @@ export function editSource(s:State,text:string,actor:string):State{
 }
 export function extract(s:State,actor:string):State{
  // Conservative, explicit demo grammar. Arbitrary prose is not interpreted as evidence.
- const matches=[...s.sourceText.matchAll(/复核后应为\s*(\d+(?:\.\d+)?)\s*Ω·μm/g)];
- if(matches.length!==1||!/有效样本仍是\s*5\s*个/.test(s.sourceText)||!/A\s*组仍为\s*820/.test(s.sourceText)||!/有效样本\s*6\s*个/.test(s.sourceText))throw new Error('无法可靠提取。示例支持“复核后应为 数值 Ω·μm”，并保留 B 组样本 5、A 组 820 与样本 6；其他口径需人工分析。');
+ const matches=[...s.sourceText.matchAll(/(?:复核后应为|The reviewed value is)\s*(\d+(?:\.\d+)?)\s*Ω·μm/gi)];
+ const chineseScope=/有效样本仍是\s*5\s*个/.test(s.sourceText)&&/A\s*组仍为\s*820/.test(s.sourceText)&&/有效样本\s*6\s*个/.test(s.sourceText);
+ const englishScope=/The reviewed value is\s*\d+(?:\.\d+)?\s*Ω·μm, with 5 valid samples\. A remains 820, with 6 valid samples\./i.test(s.sourceText);
+ if(matches.length!==1||!(chineseScope||englishScope))throw new Error('无法可靠提取。示例支持“复核后应为 数值 Ω·μm”，并保留 B 组样本 5、A 组 820 与样本 6；其他口径需人工分析。');
  const value=Number(matches[0][1]);if(!Number.isFinite(value)||value<=0||value>100000)throw new Error('请检查数值范围');
  return change({...s,sourceDirty:false,extracted:false,memories:s.memories.map(m=>m.id==='data'?{...m,value,text:`B 组中位数 ${value} Ω·μm，n=5；A 组 820 Ω·μm，n=6。`,status:'pending',version:m.version+1}:m)},`${actor} · 重新提取数值；等待提取核查与 Choi 确认`)
 }
 export function checkExtraction(s:State,actor:string):State{if(s.sourceDirty||!s.memories.find(m=>m.id==='data')?.value)throw new Error('先完成重新提取');return change({...s,extracted:true},`${actor} · 确认提取符合当前原文；数据仍待负责人确认`)}
 export function recall(s:State,actor:string,question:string,ignore:MemoryId[]=[]):Answer{
- const relevant=/汇报|报告|进展|月报|准备|下一|会议|实验|数据|目标|材料|研究/.test(question);
+ const relevant=/汇报|报告|进展|月报|准备|下一|会议|实验|数据|目标|材料|研究|\b(report|reports|progress|monthly|prepare|preparation|meeting|meetings|experiment|experiments|data|target|targets|material|materials|research|resistance|screening|M09)\b/i.test(question);
  const used:CallItem[]=[],skipped:CallItem[]=[];
  for(const m of s.memories){
   if(m.scope==='private'&&m.owner!==actor)continue; // Do not reveal private metadata.
