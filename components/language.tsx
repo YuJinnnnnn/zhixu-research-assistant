@@ -2,8 +2,8 @@
 import {Children,cloneElement,isValidElement,useEffect,useState,type ReactNode,type ReactElement} from 'react';
 import {LANGUAGE_KEY,translate,type Locale} from '@/lib/i18n';
 export function useLanguage(){
- const [language,setLanguage]=useState<Locale>('zh');
- useEffect(()=>{try{if(localStorage.getItem(LANGUAGE_KEY)==='en')setLanguage('en')}catch{}const sync=(e:StorageEvent)=>{if(e.key===LANGUAGE_KEY)setLanguage(e.newValue==='en'?'en':'zh')};window.addEventListener('storage',sync);return()=>window.removeEventListener('storage',sync)},[]);
+ const [language,setLanguage]=useState<Locale>('en');
+ useEffect(()=>{try{if(localStorage.getItem(LANGUAGE_KEY)==='zh')setLanguage('zh')}catch{}const sync=(e:StorageEvent)=>{if(e.key===LANGUAGE_KEY)setLanguage(e.newValue==='zh'?'zh':'en')};window.addEventListener('storage',sync);return()=>window.removeEventListener('storage',sync)},[]);
  useEffect(()=>{document.documentElement.lang=language==='en'?'en':'zh-CN';document.title=language==='en'?'Zhixu · Research memory assistant':'知序 · IBS 研究团队工作台'},[language]);
  function switchLanguage(next:Locale){setLanguage(next);try{localStorage.setItem(LANGUAGE_KEY,next)}catch{}}
  return {language,switchLanguage,t:(text:string)=>translate(text,language),localize:(node:ReactNode)=>localizeTree(node,language)};
