@@ -39,8 +39,22 @@ export function MeetingRecord({
   const [editor, setEditor] = useState<number | null>(null),
     [draft, setDraft] = useState(''),
     [error, setError] = useState('');
-  const summary = state.meetingSummaries?.[meeting],
-    stale = !!summary && summary.signature !== signature(state, meeting);
+  const summary = state.meetingSummaries?.[meeting];
+  const noUserEdits = meetings[meeting].speeches.every(
+    (_, speaker) => versions(state, meeting, speaker).length === 0,
+  );
+  // Summaries saved before version history began at zero used a baseline count
+  // of one. Keep those pristine existing summaries valid after the migration.
+  const legacyInitialSignature = JSON.stringify(
+    meetings[meeting].speeches.map((_, speaker) => [
+      transcript(state, meeting, speaker),
+      1,
+    ]),
+  );
+  const stale =
+    !!summary &&
+    summary.signature !== signature(state, meeting) &&
+    !(noUserEdits && summary.signature === legacyInitialSignature);
   useEffect(() => {
     if (!state.meetingSummaries?.[meeting])
       onSave(
@@ -164,7 +178,7 @@ export function MeetingRecord({
       <TabsContent value="transcript">
         {meetings[meeting].speeches.map((_, i) => {
           const history = versions(state, meeting, i),
-            latest = history.at(-1)!;
+            latest = history.at(-1);
           return (
             <article className="transcript-row" key={i}>
               <span className="person-initial">{people[i].name[0]}</span>
@@ -175,9 +189,11 @@ export function MeetingRecord({
                   <time>{timestamps[i]}</time>
                 </div>
                 <p>{t(transcript(state, meeting, i))}</p>
-                <small className="transcript-version">
-                  v{latest.version} · {latest.author} · {date(latest.at)}
-                </small>
+                {latest && (
+                  <small className="transcript-version">
+                    v{latest.version} · {latest.author} · {date(latest.at)}
+                  </small>
+                )}
                 <div className="compact-actions">
                   <Button variant="outline" onClick={() => edit(i)}>
                     {en ? 'Review & edit' : '核查与编辑'}

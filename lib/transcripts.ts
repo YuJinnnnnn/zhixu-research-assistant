@@ -20,17 +20,7 @@ export function transcript(s: State, m: number, p: number): string {
         meetings[m].speeches[p]);
 }
 export function versions(s: State, m: number, p: number): TranscriptVersion[] {
-  const stored = s.transcriptVersions?.[`${m}:${p}`];
-  return stored?.length
-    ? stored
-    : [
-        {
-          version: 1,
-          text: transcript(s, m, p),
-          author: people[p].name,
-          at: null,
-        },
-      ];
+  return s.transcriptVersions?.[`${m}:${p}`] ?? [];
 }
 export function signature(s: State, m: number) {
   return JSON.stringify(
