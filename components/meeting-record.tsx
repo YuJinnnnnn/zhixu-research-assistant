@@ -18,6 +18,7 @@ import {
   generateSummary,
 } from '@/lib/transcripts';
 import { meetings, people, timestamps } from '@/lib/scenario';
+import { meetingsEn } from '@/lib/scenario.en';
 import type { State } from '@/lib/memory';
 import { translate, type Locale } from '@/lib/i18n';
 export function MeetingRecord({
@@ -55,6 +56,23 @@ export function MeetingRecord({
       : en
         ? 'Original record · time unavailable'
         : '原始记录 · 时间未记录';
+
+  function excerpt(text: string) {
+    return text
+      .split(/(?<=[。！？]|[.!?](?=\s|$))\s*/u)
+      .slice(0, 2)
+      .join(' ');
+  }
+
+  function summaryCopy(text: string, speaker: number) {
+    const translated = t(text);
+    // Summary records contain a shortened source sentence, rather than the
+    // whole stored transcript. Match that source to its English scenario copy.
+    if (en && translated === text) {
+      return excerpt(meetingsEn[meeting].speeches[speaker]);
+    }
+    return translated;
+  }
   // Present source records in the selected language, including in the editable field.
   // An intentional edit is then saved as a new, traceable version in that language.
   function edit(i: number) {
@@ -131,7 +149,7 @@ export function MeetingRecord({
             {summary.lines.map((line, i) => (
               <div className="summary-line" key={i}>
                 <strong>{line.speaker}</strong>
-                <p>{t(line.text)}</p>
+                <p>{summaryCopy(line.text, i)}</p>
               </div>
             ))}
           </>
