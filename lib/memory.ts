@@ -1,10 +1,11 @@
+import type {TranscriptVersion,MeetingSummary} from './transcripts.ts';
 export type Status='pending'|'confirmed'|'rejected'|'forgotten';
 export type MemoryId='goal'|'data'|'decision'|'screening'|'hypothesis'|'tasks'|'private'|'other';
-export type Memory={id:MemoryId;title:string;text:string;status:Status;owner:string;scope:'team'|'private';project:string;source:string;meeting:number;speaker:number;version:number;value?:number};
+export type Memory={id:MemoryId;title:string;text:string;status:Status;owner:string;scope:'team'|'private';project:string;source:string;meeting:number;speaker:number;version:number;value?:number;sourceReviewRequired?:boolean};
 export type CallItem={id:MemoryId;title:string;reason:string;source:string;meeting:number;speaker:number};
 export type Answer={text:string;used:CallItem[];skipped:CallItem[];revision:number};
 export type Session={id:string;actor:string;question:string;answer:Answer|null};
-export type State={schema:3;revision:number;memories:Memory[];extracted:boolean;sourceText:string;sourceAuthor:string;sourceHistory:{text:string;author:string}[];sourceDirty:boolean;audit:string[];sessions:Session[]};
+export type State={transcriptVersions?:Record<string,TranscriptVersion[]>;meetingSummaries?:Record<string,MeetingSummary>;schema:3;revision:number;memories:Memory[];extracted:boolean;sourceText:string;sourceAuthor:string;sourceHistory:{text:string;author:string}[];sourceDirty:boolean;audit:string[];sessions:Session[]};
 export const originalSource='我要纠正上次报告的 B 组中位数：610 来自旧版汇总表，复核后应为 690 Ω·μm，有效样本仍是 5 个。A 组仍为 820，有效样本 6 个，以复核表 v2 为准。';
 export function initialState():State{return {schema:3,revision:1,extracted:false,sourceText:originalSource,sourceAuthor:'Choi（原始发言）',sourceHistory:[],sourceDirty:false,audit:[],sessions:[],memories:[
  {id:'goal',title:'接触电阻降低目标',text:'月初目标：相对 A 对照组降低至少 20%。这是目标，不是实验结果。',status:'confirmed',owner:'Park',scope:'team',project:'M09',source:'09.02 · Park · 02:10（预置已确认）',meeting:0,speaker:0,version:1},
@@ -23,6 +24,7 @@ export function act(s:State,id:MemoryId,action:'confirm'|'reject'|'forget'|'reco
  if(m.scope==='private'&&actor!==m.owner)throw new Error('无权访问个人记忆');
  if(action==='forget'&&m.owner!==actor)throw new Error(`团队记忆由 ${m.owner} 撤回；你可以在回答中选择本次不用`);
  if(['confirm','reconsider'].includes(action)&&m.owner!==actor)throw new Error(`请切换到 ${m.owner} 的演示视角`);
+ if(action==='confirm'&&m.sourceReviewRequired)throw new Error('来源已修改，需重新核查并结构化提取，不能确认旧记忆。');
  if(action==='confirm'&&id==='data'&&(!s.extracted||s.sourceDirty||!m.value))throw new Error('先重新提取并核查数值、单位与口径');
  if(action==='confirm'&&m.status!=='pending')throw new Error('只能确认待核查候选');
  if(action==='reject'&&m.status!=='pending')throw new Error('只能拒绝候选');
@@ -36,7 +38,8 @@ export function act(s:State,id:MemoryId,action:'confirm'|'reject'|'forget'|'reco
 }
 export function editSource(s:State,text:string,actor:string):State{
  if(!text.trim())throw new Error('转录不能为空');
- return change({...s,sourceText:text.trim(),sourceAuthor:actor,sourceHistory:[{text:s.sourceText,author:s.sourceAuthor},...s.sourceHistory].slice(0,10),sourceDirty:true,extracted:false,memories:s.memories.map(m=>m.id==='data'?{...m,status:'pending',text:'来源已修改，等待重新提取',value:undefined,version:m.version+1}:m)},`${actor} · 修正转录；旧数据及派生摘要停止当前调用`)
+ const at=new Date().toISOString();const history=s.transcriptVersions?.['2:3']??[{version:1,text:s.sourceText,author:s.sourceAuthor,at:null}];
+ return change({...s,transcriptVersions:{...s.transcriptVersions,'2:3':[...history,{version:history.length+1,text:text.trim(),author:actor,at}]},sourceText:text.trim(),sourceAuthor:actor,sourceHistory:[{text:s.sourceText,author:s.sourceAuthor},...s.sourceHistory].slice(0,10),sourceDirty:true,extracted:false,memories:s.memories.map(m=>m.id==='data'?{...m,status:'pending',text:'来源已修改，等待重新提取',value:undefined,version:m.version+1}:m)},`${actor} · 修正转录；旧数据及派生摘要停止当前调用`)
 }
 export function extract(s:State,actor:string):State{
  // Conservative, explicit demo grammar. Arbitrary prose is not interpreted as evidence.
@@ -77,4 +80,5 @@ export function restore(raw:string):State{
  if(s.schema!==3||!Number.isInteger(s.revision)||!Array.isArray(s.memories)||s.memories.length!==8||new Set(s.memories.map(m=>m.id )).size!==8||!initialState().memories.every(m=>s.memories.some(x=>x.id===m.id))||s.memories.some(m=>!['pending','confirmed','rejected','forgotten'].includes(m.status)||typeof m.text!=='string'||typeof m.title!=='string'||!['team','private'].includes(m.scope)||(m.value!==undefined&&(!Number.isFinite(m.value)||m.value<=0)))||typeof s.sourceText!=='string'||typeof s.sourceAuthor!=='string'||typeof s.extracted!=='boolean'||typeof s.sourceDirty!=='boolean'||!Array.isArray(s.audit)||!Array.isArray(s.sessions)||!Array.isArray(s.sourceHistory))throw new Error('本机存档格式不兼容');
  return s;
 }
+
 
