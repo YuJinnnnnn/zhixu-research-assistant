@@ -82,7 +82,10 @@ export function MeetingRecord({
     const translated = t(text);
     // Summary records contain a shortened source sentence, rather than the
     // whole stored transcript. Match that source to its English scenario copy.
-    if (en && translated === text) {
+    // Punctuation normalization can change the string even when its Chinese
+    // words were not translated, so detect remaining Han characters instead
+    // of relying on strict equality.
+    if (en && /\p{Script=Han}/u.test(translated)) {
       return excerpt(meetingsEn[meeting].speeches[speaker]);
     }
     return translated;
@@ -162,7 +165,10 @@ export function MeetingRecord({
             </p>
             {summary.lines.map((line, i) => (
               <div className="summary-line" key={i}>
-                <strong>{line.speaker}</strong>
+                <div className="summary-speaker">
+                  <strong>{line.speaker}</strong>
+                  <span>{t(people[i].role)}</span>
+                </div>
                 <p>{summaryCopy(line.text, i)}</p>
               </div>
             ))}
