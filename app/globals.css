@@ -2440,6 +2440,18 @@ html[lang='en'] .manual-brand small {
     min-height: 0;
     width: 100%;
   }
+  .workspace-resizable[data-collapsed='false'] > .workspace-nav-panel {
+    flex: 0 0 230px !important;
+  }
+  .workspace-resizable[data-collapsed='false'] > .workspace-content-panel {
+    flex: 1 1 auto !important;
+  }
+  .workspace-resizable[data-collapsed='true'] > .workspace-nav-panel {
+    flex: 0 0 0 !important;
+  }
+  .workspace-resizable[data-collapsed='true'] > .workspace-content-panel {
+    flex: 1 1 100% !important;
+  }
   .workspace-nav-panel,
   .workspace-content-panel {
     height: 100%;
